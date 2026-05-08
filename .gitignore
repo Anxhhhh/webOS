@@ -1,0 +1,9 @@
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+globalContext.md
+toPaste.txt
+node_modules/
+dist/
+.DS_Store
+*.local
