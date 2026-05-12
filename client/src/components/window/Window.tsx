@@ -21,13 +21,20 @@ export const Window: React.FC<WindowProps> = ({ windowData }) => {
   const [localSize, setLocalSize] = useState(size);
   const isDraggingRef = useRef(false);
   const isResizingRef = useRef(false);
+  
+  // Refs to keep track of the most current position/size for interactjs listeners
+  // without triggering effect re-runs
+  const posRef = useRef(position);
+  const sizeRef = useRef(size);
 
-  // Sync local state when store position/size changes (e.g. restore from maximized)
+  // Sync local state and refs when store position/size changes (e.g. restore from maximized)
   // but NEVER during an active drag/resize
   useEffect(() => {
     if (!isDraggingRef.current && !isResizingRef.current) {
       setLocalPos(position);
       setLocalSize(size);
+      posRef.current = position;
+      sizeRef.current = size;
     }
   }, [position, size]);
 
@@ -54,17 +61,16 @@ export const Window: React.FC<WindowProps> = ({ windowData }) => {
             focusWindow(id);
           },
           move(event) {
-            setLocalPos(prev => ({
-              x: prev.x + event.dx,
-              y: prev.y + event.dy
-            }));
+            const newPos = {
+              x: posRef.current.x + event.dx,
+              y: posRef.current.y + event.dy
+            };
+            posRef.current = newPos;
+            setLocalPos(newPos);
           },
           end() {
             isDraggingRef.current = false;
-            setLocalPos(currentPos => {
-              updatePosition(id, currentPos);
-              return currentPos;
-            });
+            updatePosition(id, posRef.current);
           }
         }
       })
@@ -76,28 +82,28 @@ export const Window: React.FC<WindowProps> = ({ windowData }) => {
             focusWindow(id);
           },
           move(event) {
-            let { x, y } = localPos;
+            let { x, y } = posRef.current;
 
             // Update position if resizing from top or left
             x += event.deltaRect.left;
             y += event.deltaRect.top;
 
-            setLocalPos({ x, y });
-            setLocalSize({
+            const newPos = { x, y };
+            const newSize = {
               width: event.rect.width,
               height: event.rect.height,
-            });
+            };
+
+            posRef.current = newPos;
+            sizeRef.current = newSize;
+
+            setLocalPos(newPos);
+            setLocalSize(newSize);
           },
           end() {
             isResizingRef.current = false;
-            setLocalSize(currentSize => {
-              updateSize(id, currentSize);
-              return currentSize;
-            });
-            setLocalPos(currentPos => {
-              updatePosition(id, currentPos);
-              return currentPos;
-            });
+            updateSize(id, sizeRef.current);
+            updatePosition(id, posRef.current);
           }
         },
         modifiers: [
@@ -114,7 +120,7 @@ export const Window: React.FC<WindowProps> = ({ windowData }) => {
     return () => {
       interactable.unset();
     };
-  }, [id, focusWindow, updatePosition, updateSize, maximized, localPos]);
+  }, [id, focusWindow, updatePosition, updateSize, maximized]);
 
   const handleMaximizeToggle = () => {
     if (maximized) {
