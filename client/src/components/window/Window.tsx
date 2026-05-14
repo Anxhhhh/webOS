@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useEffect, useRef } from 'react';
+import { motion, AnimatePresence, useMotionValue } from 'framer-motion';
 import interact from 'interactjs';
 import type { WindowInstance } from '../../types/window.types';
 import { useWindowStore } from '../../store/window.store';
@@ -17,8 +17,11 @@ export const Window: React.FC<WindowProps> = ({ windowData }) => {
   const openContextMenu = useFileSystemStore((state) => state.openContextMenu);
   const windowRef = useRef<HTMLDivElement>(null);
   
-  const [localPos, setLocalPos] = useState(position);
-  const [localSize, setLocalSize] = useState(size);
+  const x = useMotionValue(position.x);
+  const y = useMotionValue(position.y);
+  const width = useMotionValue(size.width);
+  const height = useMotionValue(size.height);
+
   const isDraggingRef = useRef(false);
   const isResizingRef = useRef(false);
   
@@ -31,12 +34,14 @@ export const Window: React.FC<WindowProps> = ({ windowData }) => {
   // but NEVER during an active drag/resize
   useEffect(() => {
     if (!isDraggingRef.current && !isResizingRef.current) {
-      setLocalPos(position);
-      setLocalSize(size);
+      x.set(position.x);
+      y.set(position.y);
+      width.set(size.width);
+      height.set(size.height);
       posRef.current = position;
       sizeRef.current = size;
     }
-  }, [position, size]);
+  }, [position, size, x, y, width, height]);
 
   useEffect(() => {
     // We completely tear down interact when maximized so it can't be dragged/resized
@@ -66,7 +71,8 @@ export const Window: React.FC<WindowProps> = ({ windowData }) => {
               y: posRef.current.y + event.dy
             };
             posRef.current = newPos;
-            setLocalPos(newPos);
+            x.set(newPos.x);
+            y.set(newPos.y);
           },
           end() {
             isDraggingRef.current = false;
@@ -82,13 +88,13 @@ export const Window: React.FC<WindowProps> = ({ windowData }) => {
             focusWindow(id);
           },
           move(event) {
-            let { x, y } = posRef.current;
+            let { x: currentX, y: currentY } = posRef.current;
 
             // Update position if resizing from top or left
-            x += event.deltaRect.left;
-            y += event.deltaRect.top;
+            currentX += event.deltaRect.left;
+            currentY += event.deltaRect.top;
 
-            const newPos = { x, y };
+            const newPos = { x: currentX, y: currentY };
             const newSize = {
               width: event.rect.width,
               height: event.rect.height,
@@ -97,8 +103,10 @@ export const Window: React.FC<WindowProps> = ({ windowData }) => {
             posRef.current = newPos;
             sizeRef.current = newSize;
 
-            setLocalPos(newPos);
-            setLocalSize(newSize);
+            x.set(newPos.x);
+            y.set(newPos.y);
+            width.set(newSize.width);
+            height.set(newSize.height);
           },
           end() {
             isResizingRef.current = false;
@@ -158,10 +166,10 @@ export const Window: React.FC<WindowProps> = ({ windowData }) => {
           style={{
             position: 'absolute',
             zIndex,
-            top: localPos.y,
-            left: localPos.x,
-            width: localSize.width,
-            height: localSize.height,
+            top: y,
+            left: x,
+            width,
+            height,
           }}
           className={`
             flex flex-col overflow-hidden
