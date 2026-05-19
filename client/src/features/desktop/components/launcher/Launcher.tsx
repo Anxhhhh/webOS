@@ -17,7 +17,7 @@ export const Launcher: React.FC = () => {
   ];
 
   const handleAppClick = (id: string, title: string) => {
-    openWindow(id, title);
+    openWindow(id, title, id);
     closeLauncher();
   };
 
