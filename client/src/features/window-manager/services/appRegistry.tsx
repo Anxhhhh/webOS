@@ -19,6 +19,7 @@ export type AppRegistryEntry = {
 };
 
 import Notepad from '@/apps/Notepad/Notepad';
+import Terminal from '@/apps/Terminal/Terminal';
 
 export const AppRegistry: Record<string, AppRegistryEntry> = {
   'folder': {
@@ -33,12 +34,12 @@ export const AppRegistry: Record<string, AppRegistryEntry> = {
     title: 'Notepad',
     defaultSize: { width: 600, height: 450 }
   },
-  // Example of how a new app would be registered:
-  // 'terminal': {
-  //   id: 'terminal',
-  //   component: lazy(() => import('@/apps/Terminal')),
-  //   title: 'Terminal'
-  // }
+  'terminal': {
+    id: 'terminal',
+    component: Terminal,
+    title: 'Terminal',
+    defaultSize: { width: 760, height: 480 }
+  }
 };
 
 export const getAppComponent = (appType?: string): React.ComponentType<any> => {
