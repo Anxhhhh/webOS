@@ -19,6 +19,7 @@ export type AppRegistryEntry = {
 };
 
 import Notepad from '@/apps/Notepad/Notepad';
+import Settings from '@/apps/Settings/Settings';
 
 export const AppRegistry: Record<string, AppRegistryEntry> = {
   'folder': {
@@ -32,6 +33,12 @@ export const AppRegistry: Record<string, AppRegistryEntry> = {
     component: Notepad,
     title: 'Notepad',
     defaultSize: { width: 600, height: 450 }
+  },
+  'settings': {
+    id: 'settings',
+    component: Settings,
+    title: 'Settings',
+    defaultSize: { width: 720, height: 520 }
   },
   // Example of how a new app would be registered:
   // 'terminal': {
