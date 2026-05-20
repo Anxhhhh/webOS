@@ -20,6 +20,7 @@ export type AppRegistryEntry = {
 
 import Notepad from '@/apps/Notepad/Notepad';
 import Terminal from '@/apps/Terminal/Terminal';
+import Settings from '@/apps/Settings/Settings';
 
 export const AppRegistry: Record<string, AppRegistryEntry> = {
   'folder': {
@@ -39,6 +40,12 @@ export const AppRegistry: Record<string, AppRegistryEntry> = {
     component: Terminal,
     title: 'Terminal',
     defaultSize: { width: 760, height: 480 }
+  },
+  'settings': {
+    id: 'settings',
+    component: Settings,
+    title: 'Settings',
+    defaultSize: { width: 720, height: 520 }
   }
 };
 

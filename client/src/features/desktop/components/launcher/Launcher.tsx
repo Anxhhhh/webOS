@@ -1,23 +1,24 @@
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Globe, Folder, Terminal, Settings, Power, User } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Folder, Globe, Power, Search, Settings, Terminal, User } from 'lucide-react';
 import { useSystemStore } from '@/features/desktop/store/useSystemStore';
 import { useWindowStore } from '@/features/window-manager/store/window.store';
 
 export const Launcher: React.FC = () => {
   const isLauncherOpen = useSystemStore((state) => state.isLauncherOpen);
   const closeLauncher = useSystemStore((state) => state.closeLauncher);
+  const reduceTransparency = useSystemStore((state) => state.settings?.reduceTransparency);
   const openWindow = useWindowStore((state) => state.openWindow);
 
   const pinnedApps = [
     { id: 'browser', icon: <Globe size={28} className="text-blue-400" />, title: 'Arc Browser' },
-    { id: 'explorer', icon: <Folder size={28} className="text-yellow-400" />, title: 'Files' },
-    { id: 'terminal', icon: <Terminal size={28} className="text-green-400" />, title: 'Terminal' },
-    { id: 'settings', icon: <Settings size={28} className="text-gray-300" />, title: 'Settings' },
+    { id: 'explorer', icon: <Folder size={28} className="text-yellow-400" />, title: 'Files', appType: 'folder' },
+    { id: 'terminal', icon: <Terminal size={28} className="text-green-400" />, title: 'Terminal', appType: 'terminal' },
+    { id: 'settings', icon: <Settings size={28} className="text-gray-300" />, title: 'Settings', appType: 'settings' },
   ];
 
-  const handleAppClick = (id: string, title: string) => {
-    openWindow(id, title, id);
+  const handleAppClick = (id: string, title: string, appType?: string) => {
+    openWindow(id, title, appType || id);
     closeLauncher();
   };
 
@@ -29,27 +30,27 @@ export const Launcher: React.FC = () => {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 20, scale: 0.95 }}
           transition={{ type: 'spring', stiffness: 350, damping: 30 }}
-          className="absolute bottom-20 left-1/2 -translate-x-1/2 w-[600px] h-[650px] bg-zinc-900/80 backdrop-blur-3xl border border-white/10 rounded-2xl shadow-2xl flex flex-col overflow-hidden z-[90]"
-          onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside
+          className={`absolute bottom-20 left-1/2 z-[90] flex h-[650px] w-[600px] -translate-x-1/2 flex-col overflow-hidden rounded-2xl border border-white/10 shadow-2xl ${
+            reduceTransparency ? 'bg-zinc-950/95' : 'bg-zinc-900/80 backdrop-blur-3xl'
+          }`}
+          onClick={(e) => e.stopPropagation()}
         >
-          {/* Search Bar */}
           <div className="p-6 pb-2">
             <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
                 placeholder="Type here to search"
-                className="w-full bg-black/20 border border-white/10 rounded-full py-2.5 pl-12 pr-4 text-sm text-white placeholder-gray-400 focus:outline-none focus:border-blue-500/50 transition-colors"
+                className="w-full rounded-full border border-white/10 bg-black/20 py-2.5 pl-12 pr-4 text-sm text-white placeholder-gray-400 transition-colors focus:border-blue-500/50 focus:outline-none"
                 autoFocus
               />
             </div>
           </div>
 
-          {/* Pinned Apps */}
           <div className="flex-1 p-8 pt-6">
-            <div className="flex items-center justify-between mb-4 px-2">
+            <div className="mb-4 flex items-center justify-between px-2">
               <h3 className="text-sm font-semibold text-white">Pinned</h3>
-              <button className="text-xs text-white/70 hover:text-white bg-white/5 hover:bg-white/10 px-2 py-1 rounded transition-colors">
+              <button className="rounded px-2 py-1 text-xs text-white/70 transition-colors hover:bg-white/10 hover:text-white">
                 All apps {'>'}
               </button>
             </div>
@@ -57,13 +58,13 @@ export const Launcher: React.FC = () => {
               {pinnedApps.map((app) => (
                 <button
                   key={app.id}
-                  onClick={() => handleAppClick(app.id, app.title)}
-                  className="flex flex-col items-center gap-2 p-2 rounded-xl hover:bg-white/5 transition-colors group"
+                  onClick={() => handleAppClick(app.id, app.title, app.appType)}
+                  className="group flex flex-col items-center gap-2 rounded-xl p-2 transition-colors hover:bg-white/5"
                 >
-                  <div className="w-12 h-12 flex items-center justify-center rounded-xl bg-white/5 group-hover:bg-white/10 transition-colors shadow-sm">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/5 shadow-sm transition-colors group-hover:bg-white/10">
                     {app.icon}
                   </div>
-                  <span className="text-xs text-white/90 truncate w-full text-center group-hover:text-white">
+                  <span className="w-full truncate text-center text-xs text-white/90 group-hover:text-white">
                     {app.title}
                   </span>
                 </button>
@@ -71,15 +72,14 @@ export const Launcher: React.FC = () => {
             </div>
           </div>
 
-          {/* Bottom Bar */}
-          <div className="h-16 bg-black/20 border-t border-white/10 px-8 flex items-center justify-between">
-            <div className="flex items-center gap-3 hover:bg-white/5 p-2 rounded-lg cursor-pointer transition-colors">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center">
+          <div className="flex h-16 items-center justify-between border-t border-white/10 bg-black/20 px-8">
+            <div className="flex cursor-pointer items-center gap-3 rounded-lg p-2 transition-colors hover:bg-white/5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-tr from-blue-500 to-purple-500">
                 <User size={16} className="text-white" />
               </div>
               <span className="text-sm font-medium text-white/90">User</span>
             </div>
-            <button className="p-2 hover:bg-white/10 rounded-lg text-white/80 hover:text-white transition-colors">
+            <button className="rounded-lg p-2 text-white/80 transition-colors hover:bg-white/10 hover:text-white">
               <Power size={20} />
             </button>
           </div>

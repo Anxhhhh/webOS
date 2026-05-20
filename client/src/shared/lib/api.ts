@@ -39,7 +39,7 @@ export const api = {
     return res.json();
   },
 
-  async updateItem(id: string, payload: { name?: string; parentId?: string | null; expectedVersion?: string }): Promise<any> {
+  async updateItem(id: string, payload: { name?: string; parentId?: string | null; content?: string; expectedVersion?: string }): Promise<any> {
     const res = await fetch(`${API_BASE}/fs/items/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },

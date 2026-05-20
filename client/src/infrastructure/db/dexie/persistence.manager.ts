@@ -1,5 +1,6 @@
 import { useFileSystemStore } from '@/features/filesystem/store/filesystem.store';
 import { useWindowStore } from '@/features/window-manager/store/window.store';
+import { AppRegistry } from '@/features/window-manager/services/appRegistry';
 import { db } from '@/infrastructure/db/dexie/db.service';
 import { api } from '@/shared/lib/api';
 
@@ -57,6 +58,7 @@ export const initializePersistence = async () => {
         useWindowStore.setState({
           windows: Object.fromEntries(serverLayout.windows.map(w => [w.id, {
             ...w,
+            title: w.appType ? AppRegistry[w.appType]?.title ?? w.id : w.id,
             minimized: w.minimized ?? false,
             maximized: w.maximized ?? false,
             focused: false // Focus will be determined on interaction
