@@ -1,13 +1,16 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import { createServer } from 'http';
 import { initDatabase } from './db';
 import fsRouter from './routes/fs';
 import windowsRouter from './routes/windows';
+import { initSockets } from './socket';
 
 dotenv.config();
 
 const app = express();
+const httpServer = createServer(app);
 const PORT = process.env.PORT || 5000;
 
 // Middleware
@@ -34,7 +37,9 @@ async function start() {
   try {
     await initDatabase();
     
-    app.listen(PORT, () => {
+    initSockets(httpServer);
+    
+    httpServer.listen(PORT, () => {
       console.log(`WebOS backend running on http://localhost:${PORT}`);
     });
   } catch (err) {

@@ -7,6 +7,9 @@ import heroWallpaper from '@/assets/hero.png';
 import { DesktopLayer } from './DesktopLayer';
 import { ContextMenu } from '@/shared/components/context-menu/ContextMenu';
 import { Launcher } from '@/features/desktop/components/launcher/Launcher';
+import { MultiplayerCursors } from '@/features/multiplayer/components/MultiplayerCursors';
+import { ActivityFeed } from '@/features/multiplayer/components/ActivityFeed';
+import { useMultiplayerSocket } from '@/features/multiplayer/hooks/useMultiplayerSocket';
 
 const wallpaperStyles: Record<WallpaperId, React.CSSProperties> = {
   image: {
@@ -26,6 +29,8 @@ const wallpaperStyles: Record<WallpaperId, React.CSSProperties> = {
 };
 
 export const Desktop: React.FC = () => {
+  useMultiplayerSocket(); // Initialize socket connection
+
   const closeLauncher = useSystemStore((state) => state.closeLauncher);
   const toggleLauncher = useSystemStore((state) => state.toggleLauncher);
   const wallpaper = useSystemStore((state) => state.settings.wallpaper);
@@ -51,6 +56,9 @@ export const Desktop: React.FC = () => {
       onClick={closeLauncher}
     >
       <DesktopLayer />
+
+      <MultiplayerCursors />
+      <ActivityFeed />
 
       <WindowContainer />
 

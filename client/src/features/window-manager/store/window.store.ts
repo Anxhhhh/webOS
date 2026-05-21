@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { WindowInstance } from '@/core/types/window.types';
 import { AppRegistry } from '../services/appRegistry';
+import { useMultiplayerStore } from '@/features/multiplayer/store/useMultiplayerStore';
 
 interface WindowState {
   windows: Record<string, WindowInstance>;
@@ -64,6 +65,16 @@ export const useWindowStore = create<WindowState>((set, get) => ({
       });
       return { windows: updatedWindows };
     });
+
+    // Emit multiplayer event
+    const multiplayerState = useMultiplayerStore.getState();
+    if (multiplayerState.connected && multiplayerState.socket) {
+      multiplayerState.socket.emit('app_opened', {
+        appType: appType || 'unknown',
+        title,
+        workspaceId: multiplayerState.workspaceId
+      });
+    }
   },
 
   closeWindow: (id) => {

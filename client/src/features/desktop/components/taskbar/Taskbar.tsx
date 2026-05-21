@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Battery, Folder, Globe, Settings, Terminal, Wifi } from 'lucide-react';
+import { Battery, Folder, Globe, Settings, Terminal, Wifi, Users } from 'lucide-react';
 import { useSystemStore, type AccentColor } from '@/features/desktop/store/useSystemStore';
 import { useWindowStore } from '@/features/window-manager/store/window.store';
+import { useMultiplayerStore } from '@/features/multiplayer/store/useMultiplayerStore';
 
 const accentClasses: Record<AccentColor, string> = {
   blue: 'text-blue-400',
@@ -15,6 +16,9 @@ export const Taskbar: React.FC = () => {
   const { isLauncherOpen, toggleLauncher, settings } = useSystemStore();
   const openWindow = useWindowStore((state) => state.openWindow);
   const [time, setTime] = useState(new Date());
+  
+  const connected = useMultiplayerStore(state => state.connected);
+  const users = useMultiplayerStore(state => state.users);
 
   useEffect(() => {
     const interval = setInterval(() => setTime(new Date()), 1000);
@@ -81,6 +85,13 @@ export const Taskbar: React.FC = () => {
         <div className="mx-1 h-6 w-[1px] rounded-full bg-white/10" />
 
         <div className="flex items-center gap-3 px-2 text-white/90">
+          <div className="flex cursor-pointer items-center gap-2 rounded-xl p-1.5 transition-colors hover:bg-white/10" title={`Connected Users: ${users.size + 1}`}>
+            <Users size={16} className={connected ? 'text-green-400' : 'text-white/50'} />
+            <span className="text-xs font-medium">{users.size + 1}</span>
+          </div>
+          
+          <div className="mx-1 h-4 w-[1px] rounded-full bg-white/20" />
+          
           <div className="flex cursor-pointer items-center gap-2 rounded-xl p-1.5 transition-colors hover:bg-white/10">
             <Wifi size={16} />
             <Battery size={16} />

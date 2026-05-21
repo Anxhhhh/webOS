@@ -39,6 +39,15 @@ export const INITIAL_ID_RECYCLE_BIN = 'recycle-bin';
 const triggerSync = async (fn: () => Promise<any>) => {
   try {
     await fn();
+    
+    // Emit fs_changed on success to sync other clients
+    import('@/features/multiplayer/store/useMultiplayerStore').then(({ useMultiplayerStore }) => {
+      const { socket, workspaceId } = useMultiplayerStore.getState();
+      if (socket?.connected) {
+        socket.emit('fs_changed', { workspaceId });
+      }
+    }).catch(console.error);
+    
   } catch (err: any) {
     console.error('Sync background error:', err);
     // If it's a conflict or any error, fetch fresh tree and reconcile
@@ -325,6 +334,14 @@ export const useFileSystemStore = create<FileSystemState>((set, get) => ({
         item.id === id ? { ...item, content } : item
       )
     });
+
+    // Real-time broadcast
+    import('@/features/multiplayer/store/useMultiplayerStore').then(({ useMultiplayerStore }) => {
+      const { socket, workspaceId } = useMultiplayerStore.getState();
+      if (socket?.connected) {
+        socket.emit('file_content_updated', { id, content, workspaceId });
+      }
+    }).catch(console.error);
 
     // Debounced sync in background
     syncFileContent(id, content, version);
