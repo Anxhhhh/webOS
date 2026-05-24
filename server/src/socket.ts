@@ -3,6 +3,7 @@ import { Server as HttpServer } from 'http';
 
 export interface UserInfo {
   id: string;
+  name: string;
   x: number;
   y: number;
   color: string;
@@ -29,16 +30,30 @@ export function initSockets(httpServer: HttpServer) {
     // Initialize user
     activeUsers.set(socket.id, {
       id: socket.id,
+      name: 'Unknown User',
       x: 0,
       y: 0,
       color: getRandomColor()
     });
 
-    socket.on('join_workspace', (workspaceId: string) => {
+    socket.on('join_workspace', (data: { workspaceId: string, name: string } | string) => {
+      let workspaceId = '';
+      let name = 'Unknown User';
+      
+      if (typeof data === 'string') {
+        workspaceId = data;
+      } else {
+        workspaceId = data.workspaceId;
+        name = data.name || name;
+      }
+
       socket.join(workspaceId);
-      console.log(`[Socket] ${socket.id} joined workspace ${workspaceId}`);
+      console.log(`[Socket] ${socket.id} (${name}) joined workspace ${workspaceId}`);
       
       const user = activeUsers.get(socket.id);
+      if (user) {
+        user.name = name;
+      }
       
       // Broadcast to others in workspace
       socket.to(workspaceId).emit('user_joined', { user });
@@ -50,6 +65,7 @@ export function initSockets(httpServer: HttpServer) {
       socket.to(workspaceId).emit('activity_event', {
         id: Math.random().toString(36).substring(7),
         userId: socket.id,
+        userName: user?.name,
         userColor: user?.color || '#fff',
         type: 'user_joined',
         timestamp: Date.now()
@@ -69,6 +85,7 @@ export function initSockets(httpServer: HttpServer) {
       socket.to(workspaceId).emit('activity_event', {
         id: Math.random().toString(36).substring(7),
         userId: socket.id,
+        userName: activeUsers.get(socket.id)?.name,
         userColor: activeUsers.get(socket.id)?.color || '#fff',
         type: 'app_opened',
         appType,
@@ -77,8 +94,11 @@ export function initSockets(httpServer: HttpServer) {
       });
     });
 
-    socket.on('fs_changed', ({ workspaceId }) => {
+    socket.on('fs_changed', (payload) => {
+      const workspaceId = payload?.workspaceId || 'global-room';
+      console.log(`[Socket] Received fs_changed from ${socket.id} for workspace ${workspaceId}`);
       socket.to(workspaceId).emit('fs_changed');
+      console.log(`[Socket] Broadcasted fs_changed to workspace ${workspaceId}`);
     });
 
     socket.on('file_content_updated', ({ id, content, workspaceId }) => {

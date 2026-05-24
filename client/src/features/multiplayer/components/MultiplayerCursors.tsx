@@ -43,7 +43,7 @@ export const MultiplayerCursors: React.FC = () => {
             className="mt-1 ml-4 px-2 py-0.5 rounded-full text-[10px] font-semibold text-white whitespace-nowrap shadow-sm"
             style={{ backgroundColor: user.color }}
           >
-            {user.id.substring(0, 5)}
+            {user.name || user.id.substring(0, 5)}
           </div>
         </motion.div>
       ))}

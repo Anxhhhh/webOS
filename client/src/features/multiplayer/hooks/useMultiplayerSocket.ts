@@ -1,6 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useMultiplayerStore } from '../store/useMultiplayerStore';
+import { api } from '@/shared/lib/api';
+import { useFileSystemStore } from '@/features/filesystem/store/filesystem.store';
 
 // Get server URL, use hostname so it works across devices on local network
 const SERVER_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000`;
@@ -8,8 +10,9 @@ const SERVER_URL = import.meta.env.VITE_API_URL || `http://${window.location.hos
 export function useMultiplayerSocket() {
   const socketRef = useRef<Socket | null>(null);
   
-  const { 
-    workspaceId, 
+    const { 
+    workspaceId,
+    username,
     setConnected, 
     setSocket,
     setUsers, 
@@ -27,7 +30,9 @@ export function useMultiplayerSocket() {
 
     socket.on('connect', () => {
       setConnected(true);
-      socket.emit('join_workspace', workspaceId);
+      if (username) {
+        socket.emit('join_workspace', { workspaceId, name: username });
+      }
     });
 
     socket.on('disconnect', () => {
@@ -60,8 +65,6 @@ export function useMultiplayerSocket() {
 
     socket.on('fs_changed', async () => {
       try {
-        const { api } = await import('@/shared/lib/api');
-        const { useFileSystemStore } = await import('@/features/filesystem/store/filesystem.store');
         const { items, version } = await api.getTree();
         useFileSystemStore.getState().setItemsAndVersion(items, version);
       } catch (err) {
@@ -70,9 +73,8 @@ export function useMultiplayerSocket() {
     });
 
     socket.on('file_content_updated', async ({ id, content }) => {
-      const { useFileSystemStore } = await import('@/features/filesystem/store/filesystem.store');
       const fsStore = useFileSystemStore.getState();
-      const items = fsStore.items.map(item => item.id === id ? { ...item, content } : item);
+      const items = fsStore.items.map((item: any) => item.id === id ? { ...item, content } : item);
       fsStore.setItemsAndVersion(items, fsStore.version);
     });
 
@@ -80,7 +82,14 @@ export function useMultiplayerSocket() {
       socket.disconnect();
       socketRef.current = null;
     };
-  }, [workspaceId, setConnected, setUsers, addUser, removeUser, updateUserCursor, addActivity]);
+  }, [workspaceId, setConnected, setUsers, addUser, removeUser, updateUserCursor, addActivity]); // removed username from here to prevent reconnecting
+
+  // Watch for username changes and emit join_workspace if connected
+  useEffect(() => {
+    if (username && socketRef.current?.connected) {
+      socketRef.current.emit('join_workspace', { workspaceId, name: username });
+    }
+  }, [username, workspaceId]);
 
   // Global mouse tracker to emit cursor events
   useEffect(() => {

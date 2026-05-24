@@ -23,7 +23,7 @@ export interface WindowLayoutPayload {
 export const api = {
   // Filesystem
   async getTree(): Promise<{ items: any[]; version: string }> {
-    const res = await fetch(`${API_BASE}/fs/tree`);
+    const res = await fetch(`${API_BASE}/fs/tree`, { cache: 'no-store' });
     if (!res.ok) throw new Error('Failed to fetch file tree');
     return res.json();
   },
@@ -69,7 +69,7 @@ export const api = {
 
   // Window Layout
   async getWindowLayout(): Promise<{ windows: WindowLayoutPayload[] }> {
-    const res = await fetch(`${API_BASE}/windows/layout`);
+    const res = await fetch(`${API_BASE}/windows/layout`, { cache: 'no-store' });
     if (!res.ok) throw new Error('Failed to fetch window layout');
     return res.json();
   },

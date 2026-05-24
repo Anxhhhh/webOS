@@ -1,10 +1,11 @@
 import { create } from 'zustand';
 
-export type WallpaperId = 'image' | 'aurora' | 'midnight' | 'sunset';
+export type WallpaperId = 'image' | 'aurora' | 'midnight' | 'sunset' | 'custom';
 export type AccentColor = 'blue' | 'emerald' | 'violet' | 'rose';
 
 export interface SystemSettings {
   wallpaper: WallpaperId;
+  customWallpaperData: string | null;
   accentColor: AccentColor;
   reduceTransparency: boolean;
   showSeconds: boolean;
@@ -22,6 +23,7 @@ interface SystemState {
 
 const defaultSettings: SystemSettings = {
   wallpaper: 'image',
+  customWallpaperData: null,
   accentColor: 'blue',
   reduceTransparency: false,
   showSeconds: false,

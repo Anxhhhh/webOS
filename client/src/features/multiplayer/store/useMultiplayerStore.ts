@@ -2,6 +2,7 @@ import { create } from 'zustand';
 
 export interface RemoteUser {
   id: string;
+  name: string;
   x: number;
   y: number;
   color: string;
@@ -10,6 +11,7 @@ export interface RemoteUser {
 export interface ActivityEvent {
   id: string;
   userId: string;
+  userName?: string;
   userColor: string;
   type: 'user_joined' | 'app_opened';
   appType?: string;
@@ -25,6 +27,8 @@ interface MultiplayerState {
   users: Map<string, RemoteUser>;
   activities: ActivityEvent[];
   workspaceId: string;
+  username: string | null;
+  setUsername: (name: string) => void;
   setConnected: (connected: boolean) => void;
   setSocket: (socket: Socket | null) => void;
   setUsers: (users: RemoteUser[]) => void;
@@ -40,7 +44,9 @@ export const useMultiplayerStore = create<MultiplayerState>((set) => ({
   users: new Map(),
   activities: [],
   workspaceId: 'global-room', // Default workspace
+  username: null,
 
+  setUsername: (name) => set({ username: name }),
   setConnected: (connected) => set({ connected }),
   setSocket: (socket) => set({ socket }),
 

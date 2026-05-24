@@ -31,9 +31,9 @@ export const Taskbar: React.FC = () => {
   };
 
   const pinnedApps = [
-    { id: 'browser', icon: <Globe size={20} />, title: 'Arc Browser' },
-    { id: 'explorer', icon: <Folder size={20} />, title: 'Files' },
-    { id: 'terminal', icon: <Terminal size={20} />, title: 'Terminal' },
+    { id: 'browser', icon: <Globe size={20} />, title: 'Arc Browser', appType: 'browser' },
+    { id: 'explorer', icon: <Folder size={20} />, title: 'Files', appType: 'folder' },
+    { id: 'terminal', icon: <Terminal size={20} />, title: 'Terminal', appType: 'terminal' },
     { id: 'settings', icon: <Settings size={20} />, title: 'Settings', appType: 'settings' },
   ];
 

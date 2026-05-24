@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMultiplayerStore, type ActivityEvent } from '../store/useMultiplayerStore';
 import { Terminal, Globe, Folder, Settings, Bell, UserPlus } from 'lucide-react';
@@ -17,25 +17,32 @@ const getEventIcon = (event: ActivityEvent) => {
 
 const getEventText = (event: ActivityEvent) => {
   const shortId = event.userId.substring(0, 5);
+  const name = event.userName || `User ${shortId}`;
   if (event.type === 'user_joined') {
-    return `User ${shortId} joined the workspace`;
+    return `${name} joined the workspace`;
   }
-  return `User ${shortId} opened ${event.title || 'an app'}`;
+  return `${name} opened ${event.title || 'an app'}`;
 };
 
 export const ActivityFeed: React.FC = () => {
   const activities = useMultiplayerStore((state) => state.activities);
   const [visibleActivities, setVisibleActivities] = useState<ActivityEvent[]>([]);
+  const seenIds = useRef<Set<string>>(new Set());
 
   // Auto-dismiss activities after 4 seconds
   useEffect(() => {
-    setVisibleActivities(activities);
+    const newActivities = activities.filter(a => !seenIds.current.has(a.id));
     
-    if (activities.length > 0) {
-      const timer = setTimeout(() => {
-        setVisibleActivities((prev) => prev.filter(a => a.id !== activities[0].id));
-      }, 4000);
-      return () => clearTimeout(timer);
+    if (newActivities.length > 0) {
+      newActivities.forEach(a => seenIds.current.add(a.id));
+      
+      setVisibleActivities(prev => [...newActivities, ...prev]);
+
+      newActivities.forEach(activity => {
+        setTimeout(() => {
+          setVisibleActivities(prev => prev.filter(a => a.id !== activity.id));
+        }, 4000);
+      });
     }
   }, [activities]);
 

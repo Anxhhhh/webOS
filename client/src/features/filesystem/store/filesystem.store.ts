@@ -3,6 +3,7 @@ import type { FileSystemItem } from '@/core/types/filesystem.types';
 import { generateId } from '@/core/utils/generateId';
 import { isValidFileName, getUniqueName } from '../validators/name.validator';
 import { api } from '@/shared/lib/api';
+import { useMultiplayerStore } from '@/features/multiplayer/store/useMultiplayerStore';
 
 type ContextMenuState = {
   isOpen: boolean;
@@ -39,14 +40,19 @@ export const INITIAL_ID_RECYCLE_BIN = 'recycle-bin';
 const triggerSync = async (fn: () => Promise<any>) => {
   try {
     await fn();
-    
+    // Fetch fresh tree to get the updated version and ensure local state is perfectly synced
+    try {
+      const { items, version } = await api.getTree();
+      useFileSystemStore.getState().setItemsAndVersion(items, version);
+    } catch (syncErr) {
+      console.error('Failed to sync tree after operation:', syncErr);
+    }
+
     // Emit fs_changed on success to sync other clients
-    import('@/features/multiplayer/store/useMultiplayerStore').then(({ useMultiplayerStore }) => {
-      const { socket, workspaceId } = useMultiplayerStore.getState();
-      if (socket?.connected) {
-        socket.emit('fs_changed', { workspaceId });
-      }
-    }).catch(console.error);
+    const { socket, workspaceId } = useMultiplayerStore.getState();
+    if (socket?.connected) {
+      socket.emit('fs_changed', { workspaceId });
+    }
     
   } catch (err: any) {
     console.error('Sync background error:', err);
@@ -208,16 +214,23 @@ export const useFileSystemStore = create<FileSystemState>((set, get) => ({
     if (!targetItem) return;
 
     if (targetItem.parentId !== INITIAL_ID_RECYCLE_BIN && targetItem.id !== INITIAL_ID_RECYCLE_BIN) {
+      // Generate unique name for recycle bin to prevent conflicts
+      const siblingsInRecycleBin = items
+        .filter(i => i.parentId === INITIAL_ID_RECYCLE_BIN)
+        .map(i => i.name);
+      const uniqueName = getUniqueName(targetItem.name, siblingsInRecycleBin, targetItem.type === 'folder');
+
       // Move to recycle bin instead of deleting
       set({
         items: items.map(item => 
-          item.id === id ? { ...item, parentId: INITIAL_ID_RECYCLE_BIN, originalParentId: item.parentId } : item
+          item.id === id ? { ...item, parentId: INITIAL_ID_RECYCLE_BIN, name: uniqueName, originalParentId: item.parentId } : item
         )
       });
 
       // Sync in background (this is moving to recycle bin)
       triggerSync(() => api.updateItem(id, {
         parentId: INITIAL_ID_RECYCLE_BIN,
+        name: uniqueName,
         expectedVersion: version || undefined
       }));
       return;
@@ -336,12 +349,10 @@ export const useFileSystemStore = create<FileSystemState>((set, get) => ({
     });
 
     // Real-time broadcast
-    import('@/features/multiplayer/store/useMultiplayerStore').then(({ useMultiplayerStore }) => {
-      const { socket, workspaceId } = useMultiplayerStore.getState();
-      if (socket?.connected) {
-        socket.emit('file_content_updated', { id, content, workspaceId });
-      }
-    }).catch(console.error);
+    const { socket, workspaceId } = useMultiplayerStore.getState();
+    if (socket?.connected) {
+      socket.emit('file_content_updated', { id, content, workspaceId });
+    }
 
     // Debounced sync in background
     syncFileContent(id, content, version);

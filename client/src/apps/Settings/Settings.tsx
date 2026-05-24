@@ -6,6 +6,7 @@ import {
   Palette,
   Settings as SettingsIcon,
   Sparkles,
+  Upload,
 } from 'lucide-react';
 import { useSystemStore, type AccentColor, type WallpaperId } from '@/features/desktop/store/useSystemStore';
 
@@ -81,6 +82,69 @@ const Settings: React.FC = () => {
                 </button>
               );
             })}
+          </div>
+
+          <div className="mt-4">
+            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-white/20 bg-white/[0.02] px-4 py-6 text-sm text-white/70 transition-colors hover:bg-white/[0.05] hover:text-white">
+              <Upload size={18} />
+              <span>Upload Custom Wallpaper</span>
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+
+                  const reader = new FileReader();
+                  reader.onload = (event) => {
+                    const img = new window.Image();
+                    img.onload = () => {
+                      const canvas = document.createElement('canvas');
+                      const MAX_WIDTH = 1920;
+                      const MAX_HEIGHT = 1080;
+                      let width = img.width;
+                      let height = img.height;
+
+                      if (width > height) {
+                        if (width > MAX_WIDTH) {
+                          height *= MAX_WIDTH / width;
+                          width = MAX_WIDTH;
+                        }
+                      } else {
+                        if (height > MAX_HEIGHT) {
+                          width *= MAX_HEIGHT / height;
+                          height = MAX_HEIGHT;
+                        }
+                      }
+
+                      canvas.width = width;
+                      canvas.height = height;
+                      const ctx = canvas.getContext('2d');
+                      if (ctx) {
+                        ctx.drawImage(img, 0, 0, width, height);
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                        updateSettings({ wallpaper: 'custom', customWallpaperData: dataUrl });
+                      }
+                    };
+                    img.src = event.target?.result as string;
+                  };
+                  reader.readAsDataURL(file);
+                }}
+              />
+            </label>
+            {settings.wallpaper === 'custom' && settings.customWallpaperData && (
+              <div className="mt-3 overflow-hidden rounded-lg border border-white/70 bg-white/10">
+                <div 
+                  className="h-20 bg-cover bg-center" 
+                  style={{ backgroundImage: `url(${settings.customWallpaperData})` }} 
+                />
+                <div className="flex items-center justify-between px-3 py-2">
+                  <span className="text-sm">Custom Upload</span>
+                  <Check size={16} className="text-white" />
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
