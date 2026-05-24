@@ -36,8 +36,10 @@ export function useMultiplayerSocket() {
   } = useMultiplayerStore();
 
   useEffect(() => {
-    // Initialize socket connection
-    const socket = io(SERVER_URL);
+    // Initialize socket connection with websocket transport to avoid Render polling issues
+    const socket = io(SERVER_URL, {
+      transports: ['websocket']
+    });
     socketRef.current = socket;
     setSocket(socket);
 

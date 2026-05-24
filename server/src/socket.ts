@@ -19,8 +19,12 @@ function getRandomColor() {
 export function initSockets(httpServer: HttpServer) {
   const io = new Server(httpServer, {
     cors: {
-      origin: "*", // Allow all origins for development
-      methods: ["GET", "POST"]
+      origin: (origin, callback) => {
+        // Dynamically allow any origin (e.g. localhost, Netlify, etc.) to support credentials
+        callback(null, true);
+      },
+      methods: ["GET", "POST"],
+      credentials: true
     }
   });
 
