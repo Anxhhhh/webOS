@@ -5,7 +5,20 @@ import { api } from '@/shared/lib/api';
 import { useFileSystemStore } from '@/features/filesystem/store/filesystem.store';
 
 // Get server URL, use hostname so it works across devices on local network
-const SERVER_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000`;
+const getSocketUrl = () => {
+  const apiUrl = import.meta.env.VITE_API_URL;
+  if (apiUrl) {
+    try {
+      const url = new URL(apiUrl);
+      return url.origin;
+    } catch (e) {
+      return apiUrl.replace('/api/v1', '');
+    }
+  }
+  return `http://${window.location.hostname}:5000`;
+};
+
+const SERVER_URL = getSocketUrl();
 
 export function useMultiplayerSocket() {
   const socketRef = useRef<Socket | null>(null);
