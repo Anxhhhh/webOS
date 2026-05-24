@@ -157,9 +157,14 @@ async function runMigrations() {
 }
 
 export async function initDatabase() {
-  await ensureDatabaseExists();
+  if (process.env.NODE_ENV !== 'production') {
+    await ensureDatabaseExists();
+  }
   
-  pool = new Pool({ connectionString });
+  pool = new Pool({ 
+    connectionString,
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+  });
   
   // Test connection and run migrations
   try {
