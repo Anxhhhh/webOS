@@ -157,13 +157,16 @@ async function runMigrations() {
 }
 
 export async function initDatabase() {
-  if (process.env.NODE_ENV !== 'production') {
+  const isLocal = connectionString.includes('localhost') || connectionString.includes('127.0.0.1');
+  console.log(`[Database] Connecting. Mode: ${isLocal ? 'Local' : 'Remote/Production'}. SSL: ${!isLocal}`);
+
+  if (isLocal) {
     await ensureDatabaseExists();
   }
   
   pool = new Pool({ 
     connectionString,
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+    ssl: isLocal ? false : { rejectUnauthorized: false }
   });
   
   // Test connection and run migrations
